@@ -1,6 +1,7 @@
 package cn.edu.sustech.cs209.chatting.client;
 
-import cn.edu.sustech.cs209.chatting.common.Message;
+import cn.edu.sustech.cs209.chatting.common.*;
+import cn.edu.sustech.cs209.chatting.common.ClientSockets;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -9,37 +10,90 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Controller implements Initializable {
+import static cn.edu.sustech.cs209.chatting.client.ChatItem.chatList;
+import static cn.edu.sustech.cs209.chatting.common.UserManager.UserIOMap;
+import static java.util.stream.Collectors.toList;
 
+public class Controller implements Initializable {
+    String ip = "localhost";
+    int port = 52209;
     @FXML
     ListView<Message> chatContentList;
-
     String username;
-
+    DBManager dbManager = new DBManager();
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
-        Dialog<String> dialog = new TextInputDialog();
+        TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Login");
-        dialog.setHeaderText(null);
-        dialog.setContentText("Username:");
-
+        dialog.setHeaderText("Please input Username and Password");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password:");
+        VBox box = new VBox();
+        box.getChildren().addAll(dialog.getEditor(), passwordField);
+        dialog.getDialogPane().setContent(box);
         Optional<String> input = dialog.showAndWait();
+        Button cancelButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        String inputPassword = passwordField.getText();
         if (input.isPresent() && !input.get().isEmpty()) {
             /*
                TODO: Check if there is a user with the same name among the currently logged-in users,
                      if so, ask the user to change the username
              */
             username = input.get();
+            AtomicBoolean usernameValid = new AtomicBoolean(false);
+            while (!usernameValid.get()) {
+                System.out.println(username);
+                boolean userOnline = ClientSockets.checkUserNameOnline(username);
+                if (userOnline) {
+                    cancelButton.setOnAction(event -> usernameValid.set(false));
+                    dialog.setTitle("Alert");
+                    dialog.setHeaderText("User already Login.");
+                    Optional<String> newInput = dialog.showAndWait();
+                    if (newInput.isPresent() && !newInput.get().isEmpty()){
+                        username = newInput.get();
+                    }
+                    else{
+                        System.out.println("Invalid username " + input + ", exiting");
+                        usernameValid.set(false);
+                        Platform.exit();
+                    }
+                } else {
+                    User user = new User(username, inputPassword);
+                    dbManager.addUser(user);
+                    Socket clientSocket = null;
+                    try {
+                        clientSocket = new Socket(ip, port);
+                        UserIO currentClientIO = new UserIO(
+                            new ObjectInputStream(clientSocket.getInputStream()),
+                            new ObjectOutputStream(clientSocket.getOutputStream()));
+                        UserManager.UserIOMap.put(user,currentClientIO);
+                    } catch (Exception e) {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setContentText("Fail to connect");
+                        alert.showAndWait();
+                    }
+
+                    ClientSockets.bindSocket(user, clientSocket);
+
+                    usernameValid.set(true);
+                }
+            }
         } else {
             System.out.println("Invalid username " + input + ", exiting");
             Platform.exit();
@@ -55,8 +109,11 @@ public class Controller implements Initializable {
         Stage stage = new Stage();
         ComboBox<String> userSel = new ComboBox<>();
 
-        // FIXME: get the user list from server, the current user's name should be filtered out
-        userSel.getItems().addAll("Item 1", "Item 2", "Item 3");
+        //get the user list from server, the current user's name should be filtered out
+        List<String> filteredList = ClientSockets.getUserList().stream()
+            .filter(name -> !name.equals(username))
+            .collect(toList());
+        userSel.getItems().addAll(filteredList);
 
         Button okBtn = new Button("OK");
         okBtn.setOnAction(e -> {
@@ -70,9 +127,19 @@ public class Controller implements Initializable {
         box.getChildren().addAll(userSel, okBtn);
         stage.setScene(new Scene(box));
         stage.showAndWait();
+        boolean itemExist = false;
+        for (ChatItem chatItem : ChatItem.chatList) {
+            if (chatItem.getTitle().equals(user.get())) {
+                itemExist = true;
+            }
+        }
+        if (!itemExist){
+            ChatItem newChatItem = new ChatItem(user.get());
+            chatList.add(newChatItem);
+        }
 
-        // TODO: if the current user already chatted with the selected user, just open the chat with that user
-        // TODO: otherwise, create a new chat item in the left panel, the title should be the selected user's name
+        //if the current user already chatted with the selected user, just open the chat with that user
+        //otherwise, create a new chat item in the left panel, the title should be the selected user's name
     }
 
     /**
@@ -87,6 +154,7 @@ public class Controller implements Initializable {
      */
     @FXML
     public void createGroupChat() {
+
     }
 
     /**
@@ -117,14 +185,14 @@ public class Controller implements Initializable {
                     }
 
                     HBox wrapper = new HBox();
-                    Label nameLabel = new Label(msg.getSentBy());
-                    Label msgLabel = new Label(msg.getData());
+                    Label nameLabel = new Label(msg.getFromUser().getNickname());
+                    Label msgLabel = new Label(msg.getMessage());
 
                     nameLabel.setPrefSize(50, 20);
                     nameLabel.setWrapText(true);
                     nameLabel.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
 
-                    if (username.equals(msg.getSentBy())) {
+                    if (username.equals(msg.getFromUser().getNickname())) {
                         wrapper.setAlignment(Pos.TOP_RIGHT);
                         wrapper.getChildren().addAll(msgLabel, nameLabel);
                         msgLabel.setPadding(new Insets(0, 20, 0, 0));

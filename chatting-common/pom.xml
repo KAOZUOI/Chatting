@@ -8,6 +8,15 @@
         <artifactId>chatting</artifactId>
         <version>dev-SNAPSHOT</version>
     </parent>
+    <dependencies>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.5.1</version>
+        </dependency>
+    </dependencies>
+
+
 
     <artifactId>chatting-common</artifactId>
 </project>
