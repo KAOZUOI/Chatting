@@ -3,6 +3,7 @@ package cn.edu.sustech.cs209.chatting.client;
 import cn.edu.sustech.cs209.chatting.common.*;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -183,18 +184,71 @@ public class Controller implements Initializable {
 
     }
 
-    /**
-     * A new dialog should contain a multi-select list, showing all user's name.
-     * You can select several users that will be joined in the group chat, including yourself.
-     * <p>
-     * The naming rule for group chats is similar to WeChat:
-     * If there are > 3 users: display the first three usernames, sorted in lexicographic order, then use ellipsis with the number of users, for example:
-     * UserA, UserB, UserC... (10)
-     * If there are <= 3 users: do not display the ellipsis, for example:
-     * UserA, UserB (2)
-     */
     @FXML
     public void createGroupChat() {
+        System.out.println("create group chat");
+
+        /* TODO: Create a group chat.
+         * A new dialog should contain a multi-select list, showing all user's name.
+         * You can select several users that will be joined in the group chat, including yourself.
+         * The naming rule for group chats is similar to WeChat:
+         * If there are > 3 users: display the first three usernames, sorted in lexicographic order, then use ellipsis with the number of users, for example:
+         * UserA, UserB, UserC... (10)
+         * If there are <= 3 users: do not display the ellipsis, for example: UserA, UserB (2)
+         */
+        Stage stage = new Stage();
+        ListView<String> userSel = new ListView<>();
+        userSel.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);   // 设置为多选模式
+
+        try {
+            Request request = new Request();
+            request.setAction("getUserList");
+            ClientSendUtil.sendTextRequestPure(request);
+            List<String> filteredList = ClientInfo.onlineUsers.
+                stream()
+                .filter(name -> !name.equals(username))
+                .collect(toList());
+            System.out.println(filteredList);
+            userSel.getItems().clear();
+            userSel.getItems().addAll(filteredList);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+
+        Button okBtn = new Button("OK");
+        okBtn.setOnAction(e -> {
+            ObservableList<String> users = userSel.getSelectionModel().getSelectedItems();
+            List<User> userList = new ArrayList<>();
+            for (String username : users) {
+                User user = new User(username);
+                userList.add(user);
+                System.out.println(username);
+            }
+
+            if (users.size() > 0) {
+                String title = "";
+                if (users.size() > 3) {
+                    title = users.get(0) + ", " + users.get(1) + ", " + users.get(2) + "... (" + users.size() + ")";
+                } else {
+                    title = ClientInfo.currentUser + ", " + users.get(0) + ", "  + " (" + users.size() + ")";
+                    //TODO:
+                }
+                User newUser = new User(title);
+                newUser.setIfGroup(true);
+                newUser.setGroupMembers(userList);
+                chatList.getItems().add(newUser);
+                chatList.getSelectionModel().select(newUser);
+            }
+            stage.close();
+        });
+        HBox box = new HBox(10);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(20, 20, 20, 20));
+        box.getChildren().addAll(userSel, okBtn);
+        stage.setScene(new Scene(box));
+        stage.showAndWait();
+
 
     }
 
@@ -213,7 +267,7 @@ public class Controller implements Initializable {
         if (message != null && !message.isEmpty()) {
             User user = chatList.getSelectionModel().getSelectedItem();
             System.out.println(user.getNickname());
-            if (user != null) {
+            if (!user.getIfGroup()) {
                 Message msg = new Message();
                 msg.setFromUser(ClientInfo.currentUser);
                 msg.setToUser(user);
@@ -222,6 +276,22 @@ public class Controller implements Initializable {
 
                 Request request = new Request();
                 request.setAction("sendMessage");
+                request.setAttribute("message", msg);
+                try {
+                    ClientSendUtil.sendTextRequestPure(request);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                Message msg = new Message();
+                msg.setFromUser(ClientInfo.currentUser);
+                msg.setToUser(user);
+                msg.setMessage(message);
+                chatContentList.getItems().add(msg);
+
+                Request request = new Request();
+                request.setAction("sendGroupMessage");
                 request.setAttribute("message", msg);
                 try {
                     ClientSendUtil.sendTextRequestPure(request);

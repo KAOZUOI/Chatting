@@ -52,5 +52,5 @@ public enum ResponseType {
      * 踢除
      */
     SENDMESSAGE,
-    REMOVE
+    SENDGROUPMESSAGE, REMOVE
 }

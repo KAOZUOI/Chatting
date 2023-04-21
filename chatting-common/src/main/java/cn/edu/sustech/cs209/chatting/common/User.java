@@ -2,11 +2,21 @@ package cn.edu.sustech.cs209.chatting.common;
 
 import javax.swing.*;
 import java.io.Serializable;
+import java.util.List;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 5942011574971970871L;
     private long id;
     private String nickname;
+
+
+
+
+    private Boolean ifGroup = false;
+
+
+
+    private List<User> groupMembers;
 
     public User(String nickname) {
         if (nickname.equals("")) {
@@ -73,5 +83,18 @@ public class User implements Serializable {
 
     public String getPassword() {
         return null;
+    }
+    public void setIfGroup(Boolean ifGroup) {
+        this.ifGroup = ifGroup;
+    }
+    public Boolean getIfGroup() {
+        return ifGroup;
+    }
+    public List<User> getGroupMembers() {
+        return groupMembers;
+    }
+
+    public void setGroupMembers(List<User> groupMembers) {
+        this.groupMembers = groupMembers;
     }
 }

@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -38,6 +40,11 @@ public class RequestProcessor implements Runnable {
                     getUserList(currentClientIOCache, request);
                 }else if ("sendMessage".equals(actionName)) {  //发送消息sendMessage
                     sendMessage(currentClientIOCache, request);
+                }
+//                request.setAction("sendGroupMessage");
+//                request.setAttribute("message", msg);
+                else if("sendGroupMessage".equals(actionName)){
+                    sendGroupMessage(currentClientIOCache, request);
                 }
 //                else if("exit".equals(actionName)){
 //                    flag = logout(currentClientIOCache, request);
@@ -190,8 +197,25 @@ public class RequestProcessor implements Runnable {
         sendResponse(toUserIO, response);
 
     }
-
-
+    public void sendGroupMessage(UserIO currentClientIO, Request request) throws IOException {
+        Message message = (Message) request.getAttribute("message");
+        User fromUser = message.getFromUser();
+        User toUser = message.getToUser();
+        List<User> toUserList = toUser.getGroupMembers();
+        for (User user : toUserList) {
+            System.out.println(user.getNickname());
+            if (Objects.equals(user.getNickname(), fromUser.getNickname())) {
+                continue;
+            }
+            Response response = new Response();
+            response.setType(ResponseType.SENDGROUPMESSAGE);
+            response.setData("message", message);
+            UserIO toUserIO = UserManager.UserIOMap.get(user);
+            sendResponse(toUserIO, response);
+        }
+        System.out.println("fromUser: " + fromUser);
+        System.out.println("message: " + message);
+    }
 
     /** 准备发送文件 */
 //    public void toSendFile(Request request)throws IOException{

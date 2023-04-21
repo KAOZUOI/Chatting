@@ -32,8 +32,14 @@ public class ClientThread extends Thread {
                 else if (type == ResponseType.LOGOUT){
                     //TODO: logout
                 }
-                else if(type == ResponseType.SENDMESSAGE){
-                    Message msg = (Message)response.getData("message");
+                else if(type == ResponseType.SENDMESSAGE) {
+                    Message msg = (Message) response.getData("message");
+                    System.out.println(msg.getMessage());
+                    // update chatContentList in Controller
+                    updateChatContentList(msg);
+                }
+                else if(type == ResponseType.SENDGROUPMESSAGE) {
+                    Message msg = (Message) response.getData("message");
                     System.out.println(msg.getMessage());
                     // update chatContentList in Controller
                     updateChatContentList(msg);
