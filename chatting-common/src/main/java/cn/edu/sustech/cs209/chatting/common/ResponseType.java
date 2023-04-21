@@ -46,7 +46,11 @@ public enum ResponseType {
      */
     BOARD,
     /*
+     * 获取用户列表
+     */
+    GETUSERLIST, /*
      * 踢除
      */
+    SENDMESSAGE,
     REMOVE
 }

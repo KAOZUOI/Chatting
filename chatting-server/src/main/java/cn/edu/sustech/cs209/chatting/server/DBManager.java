@@ -1,4 +1,6 @@
-package cn.edu.sustech.cs209.chatting.common;
+package cn.edu.sustech.cs209.chatting.server;
+
+import cn.edu.sustech.cs209.chatting.common.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,14 +8,32 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class DBManager extends DBConnector{
-    private static final String IP_ADDRESS = "localhost";
-    private static final String PORT_NUM = "3456";
-    private static final String DB_NAME ="postgresql";
-    private static final String PASSWORD = "***";
-    private static final String USER_NAME = "postgresql";
-    String url = "jdbc:postgresql://localhost:3456/chatroom";
-    private static Connection conn;
+public class DBManager extends DBConnector {
+    private static Connection conn = getConnection();;
+    public boolean findUser(User user){
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try{
+            String sql = "SELECT nickname FROM users_passwords WHERE nickname=?;";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, user.getNickname());
+            rs = stmt.executeQuery();
+
+            if (rs.next() && rs.getString(1).equals(user.getNickname())) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
     public ArrayList<User> findAllUser() {
         UserManager userManager = new UserManager();
         ArrayList<String> names = new ArrayList<String>();
@@ -22,7 +42,7 @@ public class DBManager extends DBConnector{
         try{
             String sql = "SELECT nickname FROM users_passwords";
             stmt = conn.prepareStatement(sql);
-            rs = stmt.executeQuery(sql);
+            rs = stmt.executeQuery();
             while (rs.next()) {
                 String nickname = rs.getString("nickname");
                 names.add(nickname);

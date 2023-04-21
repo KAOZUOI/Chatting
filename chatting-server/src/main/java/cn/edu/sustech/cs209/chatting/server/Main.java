@@ -1,5 +1,7 @@
 package cn.edu.sustech.cs209.chatting.server;
 
+import cn.edu.sustech.cs209.chatting.common.User;
+
 import javax.swing.*;
 import java.io.IOException;
 import java.net.ServerSocket;

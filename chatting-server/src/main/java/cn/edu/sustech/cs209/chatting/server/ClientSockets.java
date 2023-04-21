@@ -1,6 +1,5 @@
-package cn.edu.sustech.cs209.chatting.common;
+package cn.edu.sustech.cs209.chatting.server;
 
-import cn.edu.sustech.cs209.chatting.common.DBManager;
 import cn.edu.sustech.cs209.chatting.common.User;
 
 import java.net.Socket;
@@ -11,7 +10,7 @@ import java.util.Map;
 
 public class ClientSockets {
 
-    public static Map<User, Socket> userSocketMap;
+    public static Map<User, Socket> userSocketMap = new HashMap<>();
     public ClientSockets() {
         DBManager dbManager = new DBManager();
         ArrayList<User> users = dbManager.findAllUser();
@@ -32,11 +31,11 @@ public class ClientSockets {
         for (Map.Entry<User, Socket> entry : userSocketMap.entrySet()) {
             String username = entry.getKey().getNickname();
             Socket socket = entry.getValue();
+            System.out.println(username);
             boolean isOnline = socket != null && socket.isConnected();
+
             if (isOnline) {
-                userList.add(username + " (Online)");
-            } else {
-                userList.add(username + " (Offline)");
+                userList.add(username);
             }
         }
         return userList;

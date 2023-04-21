@@ -6,11 +6,9 @@ import java.io.Serializable;
 public class User implements Serializable {
     private static final long serialVersionUID = 5942011574971970871L;
     private long id;
-    private String password;
     private String nickname;
 
-    public User(String nickname, String password) {
-        this.password = password;
+    public User(String nickname) {
         if (nickname.equals("")) {
             this.nickname = "未命名";
         } else {
@@ -18,9 +16,8 @@ public class User implements Serializable {
         }
     }
 
-    public User(long id, String password) {
+    public User(long id) {
         this.id = id;
-        this.password = password;
     }
 
     public long getId() {
@@ -31,13 +28,6 @@ public class User implements Serializable {
         this.id = id;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getPassword() {
-        return password;
-    }
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
@@ -54,7 +44,6 @@ public class User implements Serializable {
         int result = 1;
         result = prime * result + (int) (id ^ (id >> 32));
         result = prime * result + ((nickname == null) ? 0 : nickname.hashCode());
-        result = prime * result + ((password == null) ? 0 : password.hashCode());
         return result;
     }
 
@@ -70,24 +59,19 @@ public class User implements Serializable {
         if (id != other.id)
             return false;
         if (nickname == null) {
-            if (other.nickname != null)
-                return false;
-        } else if (!nickname.equals(other.nickname))
-            return false;
-        if (password == null) {
-            if (other.password != null)
-                return false;
-        } else if (!password.equals(other.password))
-            return false;
-        return true;
+            return other.nickname == null;
+        } else return nickname.equals(other.nickname);
     }
 
     @Override
     public String toString() {
         return this.getClass().getName()
             + "[id=" + this.id
-            + ",pwd=" + this.password
             + ",nickname=" + this.nickname
             + "]";
+    }
+
+    public String getPassword() {
+        return null;
     }
 }

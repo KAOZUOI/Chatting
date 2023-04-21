@@ -13,8 +13,11 @@ public enum ResponseStatus {
      * 请求的资源未找到
      */
     NOT_FOUND,
+    ERROR,
     /**
      * 错误的请求对象
      */
-    BAD_REQUEST
+    BAD_REQUEST;
+
+
 }

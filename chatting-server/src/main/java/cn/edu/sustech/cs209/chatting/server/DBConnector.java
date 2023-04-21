@@ -1,4 +1,4 @@
-package cn.edu.sustech.cs209.chatting.common;
+package cn.edu.sustech.cs209.chatting.server;
 
 import java.sql.*;
 
@@ -9,7 +9,6 @@ public class DBConnector {
     private static final String DB_NAME ="Chatting";
     private static final String PASSWORD = "020928";
     private static final String USER_NAME = "postgres";
-    String url = "jdbc:postgresql://localhost:3456/chatroom";
     private static Connection connection;
 
     public static Connection getConnection() {
