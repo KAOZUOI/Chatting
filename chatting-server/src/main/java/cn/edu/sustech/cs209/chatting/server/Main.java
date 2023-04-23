@@ -10,7 +10,6 @@ import java.net.Socket;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-
         int port = 52209;
         //initialize server socket
         ServerSocket serverSocket = new ServerSocket(port);
@@ -28,6 +27,7 @@ public class Main {
                     //invoke RequestProcessor to process every client's request in Thread
                     new Thread(new RequestProcessor(socket)).start();
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

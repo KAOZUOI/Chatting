@@ -6,7 +6,6 @@ import java.io.OutputStream;
 
 
 public class IOUtil {
-    /** 关闭字节输入流 */
     public static void close(InputStream is){
         if(null != is){
             try {
@@ -16,7 +15,6 @@ public class IOUtil {
             }
         }
     }
-    /** 关闭字节输出流 */
     public static void close(OutputStream os){
         if(null != os){
             try {
@@ -26,8 +24,6 @@ public class IOUtil {
             }
         }
     }
-
-    /** 关闭字节输入流和输出流 */
     public static void close(InputStream is, OutputStream os){
         close(is);
         close(os);

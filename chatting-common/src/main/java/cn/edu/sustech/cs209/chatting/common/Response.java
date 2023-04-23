@@ -1,26 +1,23 @@
 package cn.edu.sustech.cs209.chatting.common;
 
 import java.io.OutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Response implements Serializable {
-    private static final long serialVersionUID = 1689541820872288991L;
-    /**
-     * 响应状态
-     */
+
+    @Serial
+    private static final long serialVersionUID = 8552903078317069001L;
+
     private ResponseStatus status;
-    /**
-     * 响应数据的类型
-     */
+
     private ResponseType type;
 
     private Map<String, Object> dataMap;
 
-    /**
-     * 响应输出流
-     */
+
     private OutputStream outputStream;
 
     public Response() {

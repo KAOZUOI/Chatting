@@ -1,22 +1,19 @@
 package cn.edu.sustech.cs209.chatting.common;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Request implements Serializable {
-    private static final long serialVersionUID = -1237018286305074249L;
-    /**
-     * 请求传送的数据类型
-     */
+
+    @Serial
+    private static final long serialVersionUID = 3347467515355760884L;
+
     private ResponseType type;
-    /**
-     * 请求动作
-     */
+
     private String action;
-    /**
-     * 请求域中的数据,name-value
-     */
+
     private Map<String, Object> attributesMap;
 
     public Request() {

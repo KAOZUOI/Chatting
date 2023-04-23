@@ -6,8 +6,8 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="600.0" prefWidth="870.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.edu.sustech.cs209.chatting.client.Controller">
-    <MenuBar VBox.vgrow="NEVER">
+<VBox prefHeight="600.0" prefWidth="870.0" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.edu.sustech.cs209.chatting.client.Controller">
+    <MenuBar prefHeight="22.0" prefWidth="830.0" VBox.vgrow="NEVER">
         <Menu mnemonicParsing="false" text="Chat">
             <MenuItem mnemonicParsing="false" onAction="#createPrivateChat" text="New Private Chat" />
             <MenuItem mnemonicParsing="false" onAction="#createGroupChat" text="New Group Chat" />
@@ -18,8 +18,10 @@
         <SplitPane dividerPositions="0.7550798258345427" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
             <ListView fx:id="chatContentList" prefHeight="367.0" prefWidth="529.0" style="-fx-background-color: #014421;" />
             <HBox prefHeight="100.0" prefWidth="200.0">
-                <TextArea fx:id="inputArea" prefHeight="138.0" prefWidth="624.0" HBox.hgrow="ALWAYS" />
-                <Button maxHeight="1.7976931348623157E308" mnemonicParsing="false" onAction="#doSendMessage" prefHeight="132.0" prefWidth="573.0" style="-fx-background-color: #001b50;" text="Send" textFill="#f4fcf4" HBox.hgrow="ALWAYS" />
+                <TextArea fx:id="inputArea" prefHeight="132.0" prefWidth="373.0" HBox.hgrow="ALWAYS" />
+                <Button maxHeight="1.7976931348623157E308" mnemonicParsing="false" onAction="#doSendMessage" prefHeight="132.0" prefWidth="324.0" style="-fx-background-color: #001b50;" text="Send" textFill="#f4fcf4" HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#doSendFile" prefHeight="132.0" prefWidth="299.0" style="-fx-background-color: #ff03fb;" text="SendFile" />
+
             </HBox>
         </SplitPane>
     </SplitPane>

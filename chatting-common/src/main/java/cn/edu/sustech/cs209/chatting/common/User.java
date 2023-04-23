@@ -1,11 +1,14 @@
 package cn.edu.sustech.cs209.chatting.common;
 
 import javax.swing.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
 public class User implements Serializable {
-    private static final long serialVersionUID = 5942011574971970871L;
+
+    @Serial
+    private static final long serialVersionUID = 3529619657213580936L;
     private long id;
     private String nickname;
 

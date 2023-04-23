@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class RequestProcessor implements Runnable {
-    private Socket currentClientSocket;  //当前正在请求服务器的客户端Socket
+    private Socket currentClientSocket;
     private DBManager dbManager;
 
     public RequestProcessor(Socket currentClientSocket){
@@ -34,52 +34,84 @@ public class RequestProcessor implements Runnable {
                 Request request = (Request)currentClientIOCache.getOis().readObject();
                 String actionName = request.getAction();   //get action in request
                 System.out.println("actionName: " + actionName);
-                if(actionName.equals("userLogin")) {  //用户登录
+                if(actionName.equals("userLogin")) {  //user login
                     login(currentClientIOCache, request);
-                }else if("getUserList".equals(actionName)){  //用户注册
+                }else if("getUserList".equals(actionName)){  //user list
                     getUserList(currentClientIOCache, request);
-                }else if ("sendMessage".equals(actionName)) {  //发送消息sendMessage
+                }else if ("sendMessage".equals(actionName)) {  //send Message
                     sendMessage(currentClientIOCache, request);
                 }
 //                request.setAction("sendGroupMessage");
 //                request.setAttribute("message", msg);
                 else if("sendGroupMessage".equals(actionName)){
-                    sendGroupMessage(currentClientIOCache, request);
+                    sendGroupMessage(currentClientIOCache, request); //send Group Message
                 }
-//                else if("exit".equals(actionName)){
-//                    flag = logout(currentClientIOCache, request);
+                else if("exit".equals(actionName)) {
+                    flag = logout(currentClientIOCache, request);
+                }
 //                }else if("chat".equals(actionName)){
 //                    chat(request);
 //                }
-//                else if("toSendFile".equals(actionName)){
-//                    toSendFile(request);
-//                }
-            else if("ReceiveFile".equals(actionName)){
-                    ReceiveFile(request);
+                else if("preSendFile".equals(actionName)){ //send file ready
+                    preSendFile(request);
+                }
+                else if ("getFile".equals(actionName)){ // ready to receive file
+                    getFile(request);
                 }
             }
         }catch(Exception e){
             e.printStackTrace();
         }
     }
+
+    public void preSendFile(Request request)throws IOException{
+        Response response = new Response();
+        response.setStatus(ResponseStatus.OK);
+        response.setType(ResponseType.SENDFILE);
+        FileInfo sendFile = (FileInfo)request.getAttribute("file");
+        response.setData("sendFile", sendFile);
+        UserIO ioSender = UserManager.UserIOMap.get(sendFile.getToUser());
+        //get FileInfo from sender and forwarding to receiver
+        sendResponse(ioSender, response);
+    }
+
+    private boolean logout(UserIO currentClientIO, Request request) throws IOException {
+        User user = (User)request.getAttribute("user");
+        UserManager.UserIOMap.remove(user);
+        ClientSockets.userSocketMap.remove(user);
+        Response response = new Response();
+        response.setType(ResponseType.LOGOUT);
+        response.setData("logoutUser", user);
+        currentClientSocket.close();
+        sendAllResponse(response);
+        return false;
+    }
+
     /** 同意接收文件 */
-    private void ReceiveFile(Request request) throws IOException {
+    private void getFile(Request request) throws IOException {
         FileInfo sendFile = (FileInfo)request.getAttribute("sendFile");
-        //向请求方(发送方)的输出流输出响应
-        Response response = new Response();  //创建一个响应对象
-        response.setType(ResponseType.AGREERECEIVEFILE);
+        //To
+        Response responseToReceiver = new Response();
+        responseToReceiver.setType(ResponseType.RECEIVEFILE);
+        responseToReceiver.setData("sendFile", sendFile);
+        responseToReceiver.setStatus(ResponseStatus.OK);
+        UserIO receiveIO = UserManager.UserIOMap.get(sendFile.getToUser());
+        this.sendResponse(receiveIO, responseToReceiver);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //From
+        Response response = new Response();
+        response.setType(ResponseType.READYTORECEIVEFILE);
         response.setData("sendFile", sendFile);
         response.setStatus(ResponseStatus.OK);
         UserIO sendIO = UserManager.UserIOMap.get(sendFile.getFromUser());
         this.sendResponse(sendIO, response);
 
-        //向接收方发出接收文件的响应
-        Response response2 = new Response();  //创建一个响应对象
-        response2.setType(ResponseType.RECEIVEFILE);
-        response2.setData("sendFile", sendFile);
-        response2.setStatus(ResponseStatus.OK);
-        UserIO receiveIO = UserManager.UserIOMap.get(sendFile.getToUser());
-        this.sendResponse(receiveIO, response2);
+
+
     }
     /** 客户端退出 */
 //    public boolean logout(UserIO oio, Request request) throws IOException{

@@ -1,23 +1,19 @@
 package cn.edu.sustech.cs209.chatting.common;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
 public class FileInfo implements Serializable {
-    private static final long serialVersionUID = -5394575332459969403L;
-    /** 消息接收者 */
+
+    @Serial
+    private static final long serialVersionUID = 169895250418838944L;
     private User toUser;
-    /** 消息发送者 */
     private User fromUser;
-    /** 源文件名 */
     private String srcName;
-    /** 发送时间 */
     private Date sendTime;
-    /** 目标地IP */
     private String destIp;
-    /** 目标地端口 */
     private int destPort;
-    /** 目标文件名 */
     private String destName;
     public User getToUser() {
         return toUser;
@@ -31,10 +27,10 @@ public class FileInfo implements Serializable {
     public void setFromUser(User fromUser) {
         this.fromUser = fromUser;
     }
-    public String getSrcName() {
+    public String getPathName() {
         return srcName;
     }
-    public void setSrcName(String srcName) {
+    public void setPathName(String srcName) {
         this.srcName = srcName;
     }
     public Date getSendTime() {

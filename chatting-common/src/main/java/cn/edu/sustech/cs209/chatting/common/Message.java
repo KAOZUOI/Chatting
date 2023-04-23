@@ -1,25 +1,18 @@
 package cn.edu.sustech.cs209.chatting.common;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
 public class Message implements Serializable {
-    private static final long serialVersionUID = 1820192075144114657L;
-    /**
-     * 消息接收者
-     */
+
+    @Serial
+    private static final long serialVersionUID = 4037239245053114759L;
     private User toUser;
-    /**
-     * 消息发送者
-     */
     private User fromUser;
-    /**
-     * 消息内容
-     */
+
     private String message;
-    /**
-     * 发送时间
-     */
+
     private Date sendTime;
 
 

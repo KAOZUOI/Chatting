@@ -5,7 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class SocketUtil {
-    /** 关闭Socket */
     public static void close(Socket socket) {
         if (socket != null && !socket.isClosed()) {
             try {
@@ -15,8 +14,6 @@ public class SocketUtil {
             }
         }
     }
-
-    /** 关闭ServerSocket */
     public static void close(ServerSocket ss) {
         if (ss != null && !ss.isClosed()) {
             try {

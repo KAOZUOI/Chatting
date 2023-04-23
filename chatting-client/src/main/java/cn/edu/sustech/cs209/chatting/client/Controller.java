@@ -12,9 +12,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -35,7 +37,7 @@ public class Controller implements Initializable {
     ListView<User> chatList;
     @FXML
     private TextArea inputArea;
-
+    public static FileInfo fileToSend;
 
     String username;
     @Override
@@ -113,6 +115,8 @@ public class Controller implements Initializable {
         clientThread.start();
     }
 
+
+
     @FXML
     public void createPrivateChat() {
         System.out.println("create private chat");
@@ -164,6 +168,13 @@ public class Controller implements Initializable {
             for (User u : chatList.getItems()) {
                 if (u.getNickname().equals(user.get())) {
                     chatList.getSelectionModel().select(u);
+                    //find all the messages with the selected user and add to the chatContentList
+                    List<Message> messages = ClientInfo.userMessageList.stream()
+                        .filter(m -> m.getFromUser().getNickname().equals(user.get())
+                            || m.getToUser().getNickname().equals(user.get()))
+                        .collect(toList());
+                    chatContentList.getItems().clear();
+                    chatContentList.getItems().addAll(messages);
                     exist = true;
                     break;
                 }
@@ -231,8 +242,7 @@ public class Controller implements Initializable {
                 if (users.size() > 3) {
                     title = users.get(0) + ", " + users.get(1) + ", " + users.get(2) + "... (" + users.size() + ")";
                 } else {
-                    title = ClientInfo.currentUser + ", " + users.get(0) + ", "  + " (" + users.size() + ")";
-                    //TODO:
+                    title = ClientInfo.currentUser.getNickname() + ", " + users.get(0) + ", "  + " (" + users.size() + ")";
                 }
                 User newUser = new User(title);
                 newUser.setIfGroup(true);
@@ -273,7 +283,7 @@ public class Controller implements Initializable {
                 msg.setToUser(user);
                 msg.setMessage(message);
                 chatContentList.getItems().add(msg);
-
+                ClientInfo.userMessageList.add(msg);
                 Request request = new Request();
                 request.setAction("sendMessage");
                 request.setAttribute("message", msg);
@@ -305,6 +315,46 @@ public class Controller implements Initializable {
 
 
     }
+    @FXML
+    public void doSendFile() {
+        // TODO: Sends the file selected to the currently selected chat.
+        // You can use the following code to open a file chooser dialog:
+
+        //prepare to send file
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a file to send");
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null) {
+            System.out.println("Selected file: " + file.getAbsolutePath());
+            User user = chatList.getSelectionModel().getSelectedItem();
+            if (!user.getIfGroup()) {
+                fileToSend = new FileInfo();
+                fileToSend.setFromUser(ClientInfo.currentUser);
+                fileToSend.setToUser(user);
+                try {
+                    fileToSend.setPathName(file.getCanonicalPath());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                fileToSend.setSendTime(new Date());
+
+                Request request = new Request();
+                request.setAction("preSendFile");
+                request.setAttribute("file", fileToSend);
+                try {
+                    ClientSendUtil.sendTextRequestPure(request);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+
+    }
+    //do mouse click event when select a chatUser
+
 
     /**
      * You may change the cell factory if you changed the design of {@code Message} model.
@@ -319,6 +369,8 @@ public class Controller implements Initializable {
                 public void updateItem(Message msg, boolean empty) {
                     super.updateItem(msg, empty);
                     if (empty || Objects.isNull(msg)) {
+                        setText(null);
+                        setGraphic(null);
                         return;
                     }
 
@@ -366,7 +418,18 @@ public class Controller implements Initializable {
                     nameLabel.setPrefSize(50, 20);
                     nameLabel.setWrapText(true);
                     nameLabel.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
+                    nameLabel.setOnMouseClicked(event -> {
+                        User selectedUser = chatList.getSelectionModel().getSelectedItem();
+                        if (!selectedUser.getIfGroup()) {
+                            List<Message> messages = ClientInfo.userMessageList.stream()
+                                .filter(m -> m.getFromUser().getNickname().equals(selectedUser.getNickname())
+                                    || m.getToUser().getNickname().equals(selectedUser.getNickname()))
+                                .collect(toList());
+                            chatContentList.getItems().clear();
+                            chatContentList.getItems().addAll(messages);
+                        }
 
+                    });
                     if (username.equals(user.getNickname())) {
                         wrapper.setAlignment(Pos.TOP_RIGHT);
                         wrapper.getChildren().addAll(msgLabel, nameLabel);
