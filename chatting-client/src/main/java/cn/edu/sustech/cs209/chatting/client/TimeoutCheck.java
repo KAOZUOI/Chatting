@@ -8,26 +8,28 @@ import java.net.Socket;
 import java.util.TimerTask;
 
 class TimeoutCheck extends TimerTask {
-    Socket socket;
-    Controller controller;
-    public TimeoutCheck(Socket socket) {
-        this.socket = socket;
-    }
+  Socket socket;
+  Controller controller;
 
-    @Override
-    public void run() {
-        try {
-            InputStream inputStream = socket.getInputStream();
-            if (inputStream.available() <= 0){
-                controller.ConnectionState.setStyle("-fx-text-fill: red;");
-            }
+  public TimeoutCheck(Socket socket) {
+    this.socket = socket;
+  }
 
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+  @Override
+  public void run() {
+    try {
+      InputStream inputStream = socket.getInputStream();
+      if (inputStream.available() <= 0) {
+        controller.ConnectionState.setStyle("-fx-text-fill: red;");
+      }
+
+      socket.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-    public void setController(Controller controller) {
-        this.controller = controller;
-    }
+  }
+
+  public void setController(Controller controller) {
+    this.controller = controller;
+  }
 }

@@ -11,33 +11,32 @@ import java.io.IOException;
 
 public class Main extends Application {
 
-    public static void main(String[] args) {
-        launch();
+  public static void main(String[] args) {
+    launch();
 
 
-    }
+  }
 
-    @Override
-    public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("main.fxml"));
-        stage.setScene(new Scene(fxmlLoader.load()));
-        stage.setTitle("Chatting Client");
-        stage.show();
-        stage.setOnCloseRequest(e -> {
-            e.consume();
-            try {
-                Request request = new Request();
-                request.setAction("exit");
-                request.setAttribute("user", ClientInfo.currentUser);
-                ClientSendUtil.sendTextRequestPure(request);
+  @Override
+  public void start(Stage stage) throws IOException {
+    FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("main.fxml"));
+    stage.setScene(new Scene(fxmlLoader.load()));
+    stage.setTitle("Chatting Client");
+    stage.show();
+    stage.setOnCloseRequest(e -> {
+      e.consume();
+      try {
+        Request request = new Request();
+        request.setAction("exit");
+        request.setAttribute("user", ClientInfo.currentUser);
+        ClientSendUtil.sendTextRequestPure(request);
 
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-            stage.close();
-        });
-    }
-
+      } catch (IOException ex) {
+        ex.printStackTrace();
+      }
+      stage.close();
+    });
+  }
 
 
 }
