@@ -4,15 +4,10 @@ import cn.edu.sustech.cs209.chatting.common.Request;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.TextInputDialog;
+
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 
 public class Main extends Application {
 
@@ -42,6 +37,7 @@ public class Main extends Application {
             stage.close();
         });
     }
+
 
 
 }

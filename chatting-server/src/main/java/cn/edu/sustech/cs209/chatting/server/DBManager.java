@@ -1,5 +1,6 @@
 package cn.edu.sustech.cs209.chatting.server;
 
+import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.User;
 
 import java.sql.Connection;
@@ -7,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DBManager extends DBConnector {
     private static Connection conn = getConnection();;
@@ -53,7 +55,6 @@ public class DBManager extends DBConnector {
             try {
                 if (rs != null) rs.close();
                 if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -91,25 +92,74 @@ public class DBManager extends DBConnector {
     }
     public void addUser(User user) {
         PreparedStatement stmt = null;
-        ResultSet rs = null;
+        int rs = 0;
         try {
-            String sql = "INSERT INTO users_passwords (nickname, pwd) VALUES (?, ?)";
+            String sql = "INSERT INTO users_passwords (nickname, pwd) VALUES (?,?)";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, user.getNickname());
-            stmt.setString(2, user.getPassword());
-            rs = stmt.executeQuery();
+            stmt.setString(2, user.getNickname());
+            rs = stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             try {
                 if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
     }
+    public void addMessage(Message message){
+        PreparedStatement stmt = null;
+        int rs = 0;
+        try {
+            String sql = "INSERT INTO messages (sender, receiver, content) VALUES (?,?,?)";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, message.getFromUser().getNickname());
+            stmt.setString(2, message.getToUser().getNickname());
+            stmt.setString(3, message.getMessage());
+            rs = stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public List<Message> getMessage(){
+        List<Message> messages = new ArrayList<>();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            String sql = "SELECT * FROM messages order by timestamp";
+            stmt = conn.prepareStatement(sql);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                String sender = rs.getString("sender");
+                String receiver = rs.getString("receiver");
+                String content = rs.getString("content");
+                Message message = new Message();
+                message.setFromUser(new User(sender));
+                message.setToUser(new User(receiver));
+                message.setMessage(content);
+                messages.add(message);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return messages;
 
+    }
     public static void main(String[] args) throws SQLException {
         Connection conn = getConnection();
         PreparedStatement stmt = null;

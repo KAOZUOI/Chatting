@@ -2,7 +2,6 @@ package cn.edu.sustech.cs209.chatting.server;
 
 import cn.edu.sustech.cs209.chatting.common.User;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -26,6 +25,7 @@ public class Main {
                     //create Thread for each client,
                     //invoke RequestProcessor to process every client's request in Thread
                     new Thread(new RequestProcessor(socket)).start();
+
                 }
 
             } catch (IOException e) {

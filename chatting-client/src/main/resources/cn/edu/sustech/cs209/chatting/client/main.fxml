@@ -37,7 +37,10 @@
                 <Color red="0.625" green="0.625" blue="0.625" fx:id="x4" />
             </textFill>
         </Label>
-        <Pane HBox.hgrow="ALWAYS" />
+        <Pane HBox.hgrow="ALWAYS">
+         <children>
+            <Label fx:id="ConnectionState" layoutX="195.0" prefHeight="15.0" prefWidth="224.0" text="Connection" textFill="#00ff1a" />
+         </children></Pane>
         <Label fx:id="currentOnlineCnt" font="$x3" text="Online: 1" textFill="$x4" HBox.hgrow="NEVER" />
     </HBox>
 </VBox>

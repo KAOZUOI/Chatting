@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.stream.Collectors.toList;
 
 public class Controller implements Initializable {
+    private static final int TIMEOUT = 10;
     String ip = "localhost";
     int port = 52209;
     @FXML
@@ -38,10 +39,13 @@ public class Controller implements Initializable {
     @FXML
     private TextArea inputArea;
     public static FileInfo fileToSend;
+    @FXML
+    Label ConnectionState;
 
     String username;
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        AtomicBoolean ifLogin = new AtomicBoolean(true);
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Login");
         dialog.setHeaderText("Please input Username and Password");
@@ -50,20 +54,77 @@ public class Controller implements Initializable {
         VBox box = new VBox();
         box.getChildren().addAll(dialog.getEditor(), passwordField);
         dialog.getDialogPane().setContent(box);
+        // 创建一个按钮来触发注册界面
+        Button registerButton = new Button("Register");
+        registerButton.setOnAction(event -> {
+            TextInputDialog registerDialog = new TextInputDialog();
+            registerDialog.setTitle("Register");
+            registerDialog.setHeaderText("Please input Username and Password");
+            PasswordField registerPasswordField = new PasswordField();
+            registerPasswordField.setPromptText("Password:");
+            VBox registerBox = new VBox();
+            registerBox.getChildren().addAll(registerDialog.getEditor(), registerPasswordField);
+            registerDialog.getDialogPane().setContent(registerBox);
+            Optional<String> registerInput = registerDialog.showAndWait();
+            try {
+                ClientInfo.clientSocket = new Socket(ip, port);
+                ClientInfo.oos = new ObjectOutputStream(ClientInfo.clientSocket.getOutputStream());
+                ClientInfo.ois = new ObjectInputStream(ClientInfo.clientSocket.getInputStream());
+                ifLogin.set(false);
+
+            } catch (IOException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setContentText("Fail to connect");
+                alert.showAndWait();
+                e.printStackTrace();
+            }
+            if (registerInput.isPresent() && !registerInput.get().isEmpty()) {
+                String registerUsername = registerInput.get();
+                String registerPassword = registerPasswordField.getText();
+                User user = new User(registerUsername);
+                Request request = new Request();
+                request.setAction("userRegister");
+                request.setAttribute("user", user);
+                ifLogin.set(false);
+                try {
+                    Response response = ClientSendUtil.sendTextRequest(request);
+                    if (response.getStatus() == ResponseStatus.OK) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Success");
+                        alert.setContentText("Register successfully");
+                        alert.showAndWait();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setContentText("Fail to register");
+                        alert.showAndWait();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        box.getChildren().add(registerButton);
+        dialog.getDialogPane().setContent(box);
         Optional<String> input = dialog.showAndWait();
         Button cancelButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
         String inputPassword = passwordField.getText();
-        try {
-            ClientInfo.clientSocket = new Socket(ip, port);
-            ClientInfo.oos = new ObjectOutputStream(ClientInfo.clientSocket.getOutputStream());
-            ClientInfo.ois = new ObjectInputStream(ClientInfo.clientSocket.getInputStream());
-        } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setContentText("Fail to connect");
-            alert.showAndWait();
-            e.printStackTrace();
+        if (ifLogin.get()){
+            try {
+                ClientInfo.clientSocket = new Socket(ip, port);
+                ClientInfo.oos = new ObjectOutputStream(ClientInfo.clientSocket.getOutputStream());
+                ClientInfo.ois = new ObjectInputStream(ClientInfo.clientSocket.getInputStream());
+            } catch (IOException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setContentText("Fail to connect");
+                alert.showAndWait();
+                e.printStackTrace();
+            }
         }
+
 
         if (input.isPresent() && !input.get().isEmpty()) {
             /*Check if there is a user with the same name among the currently logged-in users,
@@ -83,6 +144,11 @@ public class Controller implements Initializable {
                         usernameValid.set(true);
                         ClientInfo.currentUser = user;
                         System.out.println("Login successfully");
+                        Request requestMessage = new Request();
+                        requestMessage.setAction("getHistoryMessage");
+                        request.setAttribute("username", user.getNickname());
+                        Response historyMessage = ClientSendUtil.sendTextRequest(requestMessage);
+
                     } else {
                         cancelButton.setOnAction(event -> usernameValid.set(true));
                         dialog.setTitle("Alert");
@@ -113,6 +179,7 @@ public class Controller implements Initializable {
         ClientThread clientThread = new ClientThread();//TODO:start a thread to receive message from server
         clientThread.setController(this);
         clientThread.start();
+
     }
 
 
@@ -209,7 +276,7 @@ public class Controller implements Initializable {
          */
         Stage stage = new Stage();
         ListView<String> userSel = new ListView<>();
-        userSel.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);   // 设置为多选模式
+        userSel.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         try {
             Request request = new Request();
@@ -247,6 +314,7 @@ public class Controller implements Initializable {
                 User newUser = new User(title);
                 newUser.setIfGroup(true);
                 newUser.setGroupMembers(userList);
+                chatContentList.getItems().clear();
                 chatList.getItems().add(newUser);
                 chatList.getSelectionModel().select(newUser);
             }
@@ -450,5 +518,8 @@ public class Controller implements Initializable {
     public void setChatContentList(Message msg) {
         System.out.println("setChatContentList");
         chatContentList.getItems().add(msg);
+    }
+    public void alertConnection(){
+
     }
 }

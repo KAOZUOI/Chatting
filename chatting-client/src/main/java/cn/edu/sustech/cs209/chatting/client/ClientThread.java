@@ -11,8 +11,9 @@ import java.util.List;
 public class ClientThread extends Thread {
     Controller controller;
     public void run() {
-        try {
-            while (ClientInfo.clientSocket.isConnected()) {
+
+        while (ClientInfo.clientSocket.isConnected()) {
+            try {
                 System.out.println("Client receive response");
                 Response response = (Response) ClientInfo.ois.readObject();
                 ResponseType type = response.getType();
@@ -24,17 +25,20 @@ public class ClientThread extends Thread {
                     List<String> updateUserList = (List<String>) response.getData("userList");
                     ClientInfo.onlineUsers = updateUserList;
                 }
+                else if(type == ResponseType.GETHISTORYMESSAGE){
+                    List<Message> historyMessageList = (List<Message>) response.getData("historyMessage");
+                    ClientInfo.userMessageList = historyMessageList;
+                }
                 else if (type == ResponseType.LOGOUT){
                     // update onlineUsers in ClientInfo
                     User logoutUser = (User) response.getData("logoutUser");
                     ClientInfo.onlineUsers.remove(logoutUser.getNickname());
-
-
                 }
                 else if(type == ResponseType.SENDMESSAGE) {
                     Message msg = (Message) response.getData("message");
                     System.out.println(msg.getMessage());
                     ClientInfo.userMessageList.add(msg);
+
                     // update chatContentList in Controller
                     updateChatContentList(msg);
                 }
@@ -44,8 +48,6 @@ public class ClientThread extends Thread {
                     ClientInfo.userMessageList.add(msg);
                     // update chatContentList in Controller
                     updateChatContentList(msg);
-
-
                 }else if (type == ResponseType.SENDFILE){
                     getSendFile(response);
                 }else if(type == ResponseType.READYTORECEIVEFILE){
@@ -54,12 +56,18 @@ public class ClientThread extends Thread {
                 else if (type == ResponseType.RECEIVEFILE){
                     receiveFile(response);
                 }
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Client receive response error");
+                Platform.runLater(() -> {
+                    controller.ConnectionState.setStyle("-fx-text-fill: red;");
+                });
+                e.printStackTrace();
+                stop();
             }
-        } catch (IOException e) {
-            //e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+
         }
+
+
     }
 
     private void getSendFile(Response response) throws IOException {

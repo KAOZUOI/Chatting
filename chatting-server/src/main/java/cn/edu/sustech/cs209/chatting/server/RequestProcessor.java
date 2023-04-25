@@ -6,13 +6,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.sql.Connection;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class RequestProcessor implements Runnable {
@@ -34,7 +29,14 @@ public class RequestProcessor implements Runnable {
                 Request request = (Request)currentClientIOCache.getOis().readObject();
                 String actionName = request.getAction();   //get action in request
                 System.out.println("actionName: " + actionName);
-                if(actionName.equals("userLogin")) {  //user login
+                if (actionName.equals("userRegister")) {  //user register
+                    register(currentClientIOCache, request);
+
+                }
+                else if(actionName.equals("getHistoryMessage")){
+                    getHistoryMessage(currentClientIOCache, request);
+                }
+                else if(actionName.equals("userLogin")) {  //user login
                     login(currentClientIOCache, request);
                 }else if("getUserList".equals(actionName)){  //user list
                     getUserList(currentClientIOCache, request);
@@ -64,6 +66,15 @@ public class RequestProcessor implements Runnable {
         }
     }
 
+    private void getHistoryMessage(UserIO currentClientIOCache, Request request) throws IOException {
+        String username = (String) request.getAttribute("username");
+        List<Message> historyMessage = dbManager.getMessage();
+        Response response = new Response();
+        response.setType(ResponseType.GETHISTORYMESSAGE);
+        response.setData("historyMessage", historyMessage);
+        sendResponse(currentClientIOCache, response);
+    }
+
     public void preSendFile(Request request)throws IOException{
         Response response = new Response();
         response.setStatus(ResponseStatus.OK);
@@ -87,7 +98,6 @@ public class RequestProcessor implements Runnable {
         return false;
     }
 
-    /** 同意接收文件 */
     private void getFile(Request request) throws IOException {
         FileInfo sendFile = (FileInfo)request.getAttribute("sendFile");
         //To
@@ -113,39 +123,6 @@ public class RequestProcessor implements Runnable {
 
 
     }
-    /** 客户端退出 */
-//    public boolean logout(UserIO oio, Request request) throws IOException{
-//        System.out.println(currentClientSocket.getInetAddress().getHostAddress()
-//            + ":" + currentClientSocket.getPort() + "走了");
-//
-//        User user = (User)request.getAttribute("user");
-//
-//        currentClientSocket.close();  //关闭这个客户端Socket
-//
-//        DataBuffer.onlineUserTableModel.remove(user.getId()); //把当前下线用户从在线用户表Model中删除
-//        Response response = new Response();
-//        iteratorResponse(response);//通知所有其它在线客户端
-//
-//        return false;  //断开监听
-//    }
-//    /** 聊天 */
-//    public void chat(Request request) throws IOException {
-//        Message msg = (Message)request.getAttribute("msg");
-//        Response response = new Response();
-//        response.setStatus(ResponseStatus.OK);
-//        response.setType(ResponseType.CHAT);
-//        response.setData("txtMsg", msg);
-//
-//        if(msg.getToUser() != null){ //私聊:只给私聊的对象返回响应
-//            UserIO io = DataBuffer.onlineUserIOCacheMap.get(msg.getToUser().getId());
-//            sendResponse(io, response);
-//        }else{  //群聊:给除了发消息的所有客户端都返回响应
-//            for(Long id : DataBuffer.onlineUserIOCacheMap.keySet()){
-//                if(msg.getFromUser().getId() == id ){	continue; }
-//                sendResponse(DataBuffer.onlineUserIOCacheMap.get(id), response);
-//            }
-//        }
-//    }
 //    /*广播*/
 //    public static void board(String str) throws IOException {
 //        User user = new User("admin");
@@ -225,6 +202,7 @@ public class RequestProcessor implements Runnable {
         response.setType(ResponseType.SENDMESSAGE);
         response.setData("message", message);
         //TODO:
+        dbManager.addMessage(message);
         UserIO toUserIO = UserManager.UserIOMap.get(toUser);
         sendResponse(toUserIO, response);
 
@@ -248,18 +226,25 @@ public class RequestProcessor implements Runnable {
         System.out.println("fromUser: " + fromUser);
         System.out.println("message: " + message);
     }
-
-    /** 准备发送文件 */
-//    public void toSendFile(Request request)throws IOException{
-//        Response response = new Response();
-//        response.setStatus(ResponseStatus.OK);
-//        response.setType(ResponseType.TOSENDFILE);
-//        FileInfo sendFile = (FileInfo)request.getAttribute("file");
-//        response.setData("sendFile", sendFile);
-//        //给文件接收方转发文件发送方的请求
-//        UserIO ioCache = DataBuffer.onlineUserIOCacheMap.get(sendFile.getToUser().getId());
-//        sendResponse(ioCache, response);
-//    }
+    //register
+    public void register(UserIO currentClientIO, Request request) throws IOException {
+        User user = (User)request.getAttribute("user");
+        System.out.println("user: " + user);
+        boolean userRegistered = dbManager.findUser(user);
+        Response response = new Response();
+        if (userRegistered){
+            response.setStatus(ResponseStatus.ERROR);
+            response.setData("msg", "This user has been registered");
+            currentClientIO.getOos().writeObject(response);
+            currentClientIO.getOos().flush();
+        } else {
+            dbManager.addUser(user);
+            response.setStatus(ResponseStatus.OK);
+            response.setData("msg", "Register successfully");
+            currentClientIO.getOos().writeObject(response);
+            currentClientIO.getOos().flush();
+        }
+    }
 
     /** 给所有在线客户都发送响应 */
     private void sendAllResponse(Response response) throws IOException {
@@ -272,9 +257,12 @@ public class RequestProcessor implements Runnable {
 
     /** 向指定客户端IO的输出流中输出指定响应 */
     private void sendResponse(UserIO onlineUserIO, Response response)throws IOException {
-        ObjectOutputStream oos = onlineUserIO.getOos();
-        oos.writeObject(response);
-        oos.flush();
+        if (onlineUserIO != null) {
+            ObjectOutputStream oos = onlineUserIO.getOos();
+            oos.writeObject(response);
+            oos.flush();
+        }
+
     }
 
     /** 向指定客户端IO的输出流中输出指定响应 */
